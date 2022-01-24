@@ -10,7 +10,7 @@ import numpy as np
 
 
 class Person:
-    def __init__(self,i, posX, posY, fart, tid_syk):
+    def __init__(self,i, fart, tid_syk):
         """
         
         Tid regnes i "frames" som betyr en "runde" i simulasjonen.
@@ -30,15 +30,15 @@ class Person:
         self.tid_infisert = -1        # "tidspunkt" for infeksjon
         
         # Nåværende posisjon
-        self.posX = posX 
-        self.posY = posY
+        self.posX = np.random.random()*100
+        self.posY = np.random.random()*100
         
         # Målposisjon
         self.nyposX = np.random.random()*100
         self.nyposY = np.random.random()*100
         
         # Forflytningshastighet
-        self.fart = fart
+        self.fart = 301 - fart
         
         self.karantene = False  # Karantene (forflyttes ikke)
         
