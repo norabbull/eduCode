@@ -12,6 +12,8 @@ Utvidelsesideer:
     - Sette i kohort
     - Vaksinasjonsgrad
     - R - tallet
+        - Tell antall personer som smittes videre av en person. 
+        Kan dermed regne R - tallet for de ulike parametrene!
     
 """
 
@@ -130,15 +132,15 @@ class Person:
 
 # Startverdier
 
-tid_slutt = 24          # antll uker vi simulerer
-N = 100                  # antall personer i populasjonen
-p_start_smittede = 10         # prosentandel infiserte individer ved start (0-100%)
+tid = 200          # antll uker vi simulerer
+N = 500                  # antall personer i populasjonen
+p_start_smittede = 1         # prosentandel infiserte individer ved start (0-100%)
 start_smittede = int(N * p_start_smittede / 100)
 
-kontaktrate = 5         # smittsomhets radius. (i pixler, 0-100).
+kontaktrate = 2         # smittsomhets radius. (i pixler, 0-100).
 p_smittsomhet = 100       # smittsomhet. sannsynlighet for å overføre sykdom (0-100%)
 
-p_karantene = 70        # prosentandel av populasjon i karantene (0-100%)
+p_karantene = 30        # prosentandel av populasjon i karantene (0-100%)
 start_karantene = int(N * p_karantene / 100)
 
 tid_syk = 10           # sykedager. Tid det tar å bli frisk igjen (0-uendelig)
@@ -173,7 +175,7 @@ fig = plt.figure(figsize=(20,10))
 plot1 = fig.add_subplot(1,2,1)
 plot2 = fig.add_subplot(1,2,2)
 plot1.axis('off')
-plot2.axis([0,1000,0,N])
+plot2.axis([0,tid,0,N+10])
 
 scatt = plot1.scatter([p.posX for p in populasjon],
                  [p.posY for p in populasjon],
@@ -224,15 +226,13 @@ def animer(frame,S, I, R,t, populasjon):
         farger.append(p.hent_farge()) #change dot color according to the person's status
 
     #oppdater plottene
-    endringe = S[-1] - 
-    
-    S.append(S[-1]-I)
     I.append(smittede)
     R.append(friskmeldt)
+    S.append(S[0]-I[-1])
     t.append(frame)
 
 
-    #tramsfer de data to the matplotlib graphics
+    # Overfør data to the matplotlib grafikk
     offsets=np.array([[p.posX for p in populasjon],
                      [p.posY for p in populasjon]])
     scatt.set_offsets(np.ndarray.transpose(offsets))
@@ -245,8 +245,10 @@ def animer(frame,S, I, R,t, populasjon):
 
 # run the animation indefinitely
 animation = FuncAnimation(fig, 
-                          animer, 
-                          interval=50,
+                          animer,
+                          frames = tid,
+                          interval=200,
                           fargs=(S,I,R,t,populasjon),
-                          blit=True)
+                          blit=False,
+                          repeat = False)
 plt.show()
