@@ -39,25 +39,46 @@ import time
 ##################################################################
 
 
-tid = 200                   # antall uker vi simulerer
+tid = 300                    # antall uker vi simulerer
 N = 1000                     # antall personer i populasjonen
-p_start_smittede = 2        # prosentandel infiserte individer ved start (0-100%)
-start_smittede = int(N * p_start_smittede / 100)
-kontaktrate = 3             # smittsomhets radius
-p_smittsomhet = 70         # smittsomhet. sannsynlighet for å overføre sykdom (0-100%)
-p_karantene = 0             # prosentandel av populasjon i karantene (0-100%)
-start_karantene = int(N * p_karantene / 100)
-tid_syk = 10                # Tid det tar å bli frisk igjen (0-uendelig)
-sykehuskapasitet = 300      # Antall personer som kan legges inn på sykehus
-fart = "tilfeldig"                   # 1 - 300. Alternativ: "tilfeldig"
-immunitet = 0              # Antall immunitetsdager
+start_smittede = 1           # prosentandel infiserte individer ved start (0-100%)
+kontaktrate = 60             # smittsomhets radius (0-100)
+p_smittsomhet = 70           # smittsomhet - sannsynlighet for å overføre sykdom (0-100%)
+karantene = 0                # prosentandel av populasjon i karantene (0-100%)
+tid_infeksjon = 15           # Tid det tar å bli frisk igjen (0-uendelig)
+sykehuskapasitet = 200       # Antall personer som kan legges inn på sykehus
+fart = "tilfeldig"           # 1 - 300. Alternativ: "tilfeldig"
+immunitet = 20               # Antall immunitetsdager
+andel_vaksinerte = 20        # Prosentandel av befolkningen som er vaksinerte
 
 
 ##################################################################
-##  IKKE ENDRE KODEN UNDER
+##  TEST-SETT:
 ##################################################################
 
-S = [N-start_smittede]
+# tid = 300                   # antall uker vi simulerer
+# N = 1000                    # antall personer i populasjonen
+# start_smittede = 1          # prosentandel infiserte individer ved start (0-100%)
+# kontaktrate = 60            # smittsomhets radius
+# p_smittsomhet = 70          # smittsomhet. sannsynlighet for å overføre sykdom (0-100%)
+# karantene = 70              # prosentandel av populasjon i karantene (0-100%)
+# tid_infeksjon = 15          # Tid det tar å bli frisk igjen (0-uendelig)
+# sykehuskapasitet = 200      # Antall personer som kan legges inn på sykehus
+# fart = "tilfeldig"          # 1 - 300. Alternativ: "tilfeldig"
+# immunitet = 20              # Antall immunitetsdager
+# andel_vaksinerte = 20       # Prosentandel av befolkningen som er vaksinerte
+
+
+
+##################################################################
+##  IKKE ENDRE KODEN UNDER'
+##################################################################
+
+start_smittede = int(N * start_smittede / 100)
+karantene = int(N * karantene / 100)
+andel_vaksinerte = int(N * andel_vaksinerte / 100)
+
+S = [N - start_smittede]
 I = [start_smittede]
 R = [0]
 t = [0]
@@ -70,12 +91,15 @@ populasjon = []
 for i in range(N):
     
     if fart == "tilfeldig": 
-        fart = (np.random.random()+0.5) * 100
+        fart = (np.random.random() + 0.5) * 100
     else: 
         fart = fart
     
     # Legge til person i populasjonen
-    p = Person(i, fart = fart, tid_syk = tid_syk, immunitet=10)
+    p = Person(i, 
+               fart = fart, 
+               tid_infeksjon = tid_infeksjon, 
+               tid_immunitet = immunitet)
     populasjon.append(p)
     
 # Smitt tilfeldige personer (antall like mange som smittede) og infiser
@@ -83,7 +107,7 @@ for p in random.sample(populasjon, start_smittede):
     p.infiser(0)
     
 # Sett et visst antall folk i karantene
-for p in random.sample(populasjon, start_karantene):
+for p in random.sample(populasjon, karantene):
     p.sett_karantene()
 
 
@@ -92,6 +116,7 @@ for p in random.sample(populasjon, start_karantene):
 ##################################################################
 
 # Opprett grafikk
+
 fig = plt.figure(figsize=(20,40))
 plot1 = fig.add_axes([0.1,0.1,0.4,0.8])
 plot2 = fig.add_axes([0.55,0.46,0.4,0.4])
@@ -115,10 +140,10 @@ plt_mottakelige, = plot2.plot(N,color="green",label="Mottakelige")
 plt_R_tallet, = plot3.plot(R_tallet[0], color = "indigo", label = "R-tallet")
 plot2.axhline(sykehuskapasitet, color = "orange", label = "sykehuskapasitet")
 plot2.legend(handles = [plt_friskmeldte,plt_infiserte, plt_mottakelige, plt_R_tallet])
-plot2.set_xlabel("Tid")
-plot2.set_ylabel("Mennesker")
-plot3.set_xlabel("Tid")
-plot3.set_ylabel("R-tallet")
+plot2.set_xlabel("Tid", fontsize = 15, fontweight = 'bold')
+plot2.set_ylabel("Mennesker", fontsize = 15, fontweight = 'bold')
+plot3.set_xlabel("Tid", fontsize = 15, fontweight = 'bold')
+plot3.set_ylabel("R-tallet", fontsize = 15, fontweight = 'bold')
 
 
 ##################################################################
@@ -126,11 +151,13 @@ plot3.set_ylabel("R-tallet")
 ##################################################################
 
 # animer - oppdater verdier for hele populasjon og oppdater plottene
-def animer(frame,S, I, R,t, populasjon):
+def animer(frame, S, I, R, t, populasjon, kontaktrate):
+
     smittede = 0
     friskmeldt = 0
     farger = []                             # grafikk
     størrelser = [20 for p in populasjon]   # grafikk
+    kontaktrate = kontaktrate * 0.06
     
     for p in populasjon:
         
@@ -144,7 +171,7 @@ def animer(frame,S, I, R,t, populasjon):
         # innen infeksjonsradiusen (gitt sannsynlighet for smitte)
         if p.infisert:
             for p2 in populasjon:
-                if p2.indeks == p.indeks or p2.infisert or p2.friskmeldt: # Endre her om de skal kunne bli syke igjen
+                if p2.indeks == p.indeks or p2.infisert or p2.friskmeldt: 
                     pass
                 else:
                     d = p.hent_dist(p2.posX, p2.posY)
@@ -152,8 +179,7 @@ def animer(frame,S, I, R,t, populasjon):
                         if np.random.random() < p_smittsomhet / 100:
                             p2.infiser(frame)
                             størrelser[p2.indeks] = 80
-
-
+                            
         if p.friskmeldt:
             friskmeldt += 1 # tell antall friskmeldte
         if p.infisert:
@@ -194,7 +220,7 @@ animation = FuncAnimation(fig,
                           animer,
                           frames = tid,
                           interval = 200,
-                          fargs = (S,I,R,t,populasjon),
+                          fargs = (S,I,R,t,populasjon,kontaktrate),
                           blit = False,
                           repeat = False)
 plt.show()
