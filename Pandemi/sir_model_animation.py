@@ -14,6 +14,7 @@ Utvidelsesideer:
     - R - tallet
         - Tell antall personer som smittes videre av en person. 
         Kan dermed regne R - tallet for de ulike parametrene!
+    - Mulighet for å dø (ift alder? Ift hvor utsatt man er?)
     
 """
 
@@ -42,15 +43,29 @@ import time
 tid = 300                    # antall uker vi simulerer
 N = 1000                     # antall personer i populasjonen
 start_smittede = 1           # prosentandel infiserte individer ved start (0-100%)
-kontaktrate = 60             # smittsomhets radius (0-100)
+kontaktrate = 70             # smittsomhets radius (0-100)
 p_smittsomhet = 70           # smittsomhet - sannsynlighet for å overføre sykdom (0-100%)
 karantene = 0                # prosentandel av populasjon i karantene (0-100%)
 tid_infeksjon = 15           # Tid det tar å bli frisk igjen (0-uendelig)
 sykehuskapasitet = 200       # Antall personer som kan legges inn på sykehus
 fart = "tilfeldig"           # 1 - 300. Alternativ: "tilfeldig"
 immunitet = 20               # Antall immunitetsdager
-andel_vaksinerte = 20        # Prosentandel av befolkningen som er vaksinerte
 
+# SMITTEVERNSTILTAK
+vaksinerte = 20              # Prosentandel av befolkningen som er vaksinerte
+karantene = 0                # prosentandel av populasjon i karantene (0-100%)
+kontaktrate = 20
+
+"""
+    Smittevernstiltak: 
+        - Kan spørre de om hvilke parametre som kan endres via smittevernstiltak.
+        Drøfte dette litt? Dermed teste med ulike verdier for dette og sammenlikne
+        med og uten smittevernstiltak. 
+    Simulasjon: 
+        - Hva er denne simulasjonen nyttig til?
+        - Hvorfor er denn simulasjonen urealistisk?
+        -  Er det andre ting simulajsonen burde ha tatt høyde for? 
+"""
 
 ##################################################################
 ##  TEST-SETT:
@@ -66,17 +81,17 @@ andel_vaksinerte = 20        # Prosentandel av befolkningen som er vaksinerte
 # sykehuskapasitet = 200      # Antall personer som kan legges inn på sykehus
 # fart = "tilfeldig"          # 1 - 300. Alternativ: "tilfeldig"
 # immunitet = 20              # Antall immunitetsdager
-# andel_vaksinerte = 20       # Prosentandel av befolkningen som er vaksinerte
+# vaksinerte = 20             # Prosentandel av befolkningen som er vaksinerte
 
 
 
 ##################################################################
-##  IKKE ENDRE KODEN UNDER'
+##  IKKE ENDRE KODEN UNDER
 ##################################################################
 
 start_smittede = int(N * start_smittede / 100)
 karantene = int(N * karantene / 100)
-andel_vaksinerte = int(N * andel_vaksinerte / 100)
+vaksinerte = int(N * vaksinerte / 100)
 
 S = [N - start_smittede]
 I = [start_smittede]
@@ -91,7 +106,7 @@ populasjon = []
 for i in range(N):
     
     if fart == "tilfeldig": 
-        fart = (np.random.random() + 0.5) * 100
+        fart = (np.random.random() + 0.5) * 150
     else: 
         fart = fart
     
@@ -102,13 +117,17 @@ for i in range(N):
                tid_immunitet = immunitet)
     populasjon.append(p)
     
-# Smitt tilfeldige personer (antall like mange som smittede) og infiser
+# Infiser gitt antall personer
 for p in random.sample(populasjon, start_smittede): 
     p.infiser(0)
     
-# Sett et visst antall folk i karantene
+# Sett gitt antall personer i karantene
 for p in random.sample(populasjon, karantene):
     p.sett_karantene()
+
+# Vaksiner gitt andel vaksinerte
+for p in random.sample(populasjon, vaksinerte):
+    p.vaksiner()
 
 
 ##################################################################
@@ -177,8 +196,9 @@ def animer(frame, S, I, R, t, populasjon, kontaktrate):
                     d = p.hent_dist(p2.posX, p2.posY)
                     if d < kontaktrate:
                         if np.random.random() < p_smittsomhet / 100:
-                            p2.infiser(frame)
-                            størrelser[p2.indeks] = 80
+                            if not p2.vaksine: 
+                                p2.infiser(frame)
+                                størrelser[p2.indeks] = 80
                             
         if p.friskmeldt:
             friskmeldt += 1 # tell antall friskmeldte

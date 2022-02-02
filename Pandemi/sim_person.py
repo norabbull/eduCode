@@ -44,13 +44,24 @@ class Person:
         self.tid_immunitet = tid_immunitet    # Hvor lenge man er immun
         
         self.sett_normaltilstand()
+        
+        
+    def sett_normaltilstand(self):
+        # Endre til start condition etter sykdom
+        self.infisert = False
+        self.mottakelig = True
+        self.friskmeldt = False
+        self.immunitet = -1
+        self.infeksjon = -1
+        self.vaksine = False
 
     def infiser(self,i):
         # Endre status til syk
-        self.infisert = True
-        self.mottakelig = False
-        self.friskmeldt = False
-        self.infeksjon = i
+        if not self.vaksine: 
+            self.infisert = True
+            self.mottakelig = False
+            self.friskmeldt = False
+            self.infeksjon = i
 
     def helbred(self,i):
         # Endre status til frisk
@@ -60,14 +71,9 @@ class Person:
         self.immunitet = i
         self.infeksjon = -1
     
-        
-    def sett_normaltilstand(self):
-        # Endre til start condition etter sykdom
-        self.infisert = False
-        self.mottakelig = True
-        self.friskmeldt = False
-        self.immunitet = -1
-        self.infeksjon = -1
+    def vaksiner(self):
+        self.vaksine = True
+        self.mottakelig = False
         
     def oppdater_status(self,i):
         
@@ -115,6 +121,8 @@ class Person:
             return 'green'
         if self.friskmeldt:
             return 'lightblue'
+        if self.vaksine: 
+            return 'orange'
 
     def hent_pos(self):
         return (self.posX, self.posY)
